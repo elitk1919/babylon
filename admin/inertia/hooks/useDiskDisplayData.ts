@@ -1,4 +1,4 @@
-import { NomadDiskInfo } from '../../types/system'
+import { BabylonDiskInfo } from '../../types/system'
 import { Systeminformation } from 'systeminformation'
 import { formatBytes } from '~/lib/util'
 
@@ -14,7 +14,7 @@ type DiskDisplayItem = {
 
 /** Get all valid disks formatted for display (settings/system page) */
 export function getAllDiskDisplayItems(
-  disks: NomadDiskInfo[] | undefined,
+  disks: BabylonDiskInfo[] | undefined,
   fsSize: Systeminformation.FsSizeData[] | undefined
 ): DiskDisplayItem[] {
   const validDisks = disks?.filter((d) => d.totalSize > 0) || []
@@ -56,7 +56,7 @@ export function getAllDiskDisplayItems(
 
 /** Get primary disk info for storage projection (easy-setup page) */
 export function getPrimaryDiskInfo(
-  disks: NomadDiskInfo[] | undefined,
+  disks: BabylonDiskInfo[] | undefined,
   fsSize: Systeminformation.FsSizeData[] | undefined
 ): { totalSize: number; totalUsed: number } | null {
   const validDisks = disks?.filter((d) => d.totalSize > 0) || []

@@ -39,7 +39,7 @@ export class RunBenchmarkJob {
           throw new Error(`Unknown benchmark type: ${benchmark_type}`)
       }
 
-      logger.info(`[RunBenchmarkJob] Benchmark ${benchmark_id} completed with NOMAD score: ${result.nomad_score}`)
+      logger.info(`[RunBenchmarkJob] Benchmark ${benchmark_id} completed with Babylon score: ${result.nomad_score}`)
 
       return {
         success: true,

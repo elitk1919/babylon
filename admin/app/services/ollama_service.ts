@@ -2,8 +2,9 @@ import { inject } from '@adonisjs/core'
 import OpenAI from 'openai'
 import type { ChatCompletionChunk, ChatCompletionMessageParam } from 'openai/resources/chat/completions.js'
 import type { Stream } from 'openai/streaming.js'
-import { NomadOllamaModel } from '../../types/ollama.js'
+import { BabylonOllamaModel, Tool, ToolCall } from '../../types/ollama.js'
 import { FALLBACK_RECOMMENDED_OLLAMA_MODELS } from '../../constants/ollama.js'
+import { toolRegistry } from './tool_registry.js'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import logger from '@adonisjs/core/services/logger'
@@ -14,37 +15,45 @@ import transmit from '@adonisjs/transmit/services/main'
 import Fuse, { IFuseOptions } from 'fuse.js'
 import { BROADCAST_CHANNELS } from '../../constants/broadcast.js'
 import env from '#start/env'
-import { NOMAD_API_DEFAULT_BASE_URL } from '../../constants/misc.js'
+import { BABYLON_API_DEFAULT_BASE_URL } from '../../constants/misc.js'
 import KVStore from '#models/kv_store'
 
-const NOMAD_MODELS_API_PATH = '/api/v1/ollama/models'
+const BABYLON_MODELS_API_PATH = '/api/v1/ollama/models'
 const MODELS_CACHE_FILE = path.join(process.cwd(), 'storage', 'ollama-models-cache.json')
 const CACHE_MAX_AGE_MS = 24 * 60 * 60 * 1000 // 24 hours
 
-export type NomadInstalledModel = {
+export type BabylonInstalledModel = {
   name: string
   size: number
   digest?: string
   details?: Record<string, any>
 }
 
-export type NomadChatResponse = {
+export type BabylonChatResponse = {
   message: { content: string; thinking?: string }
   done: boolean
   model: string
 }
 
-export type NomadChatStreamChunk = {
+export type BabylonChatStreamChunk = {
   message: { content: string; thinking?: string }
   done: boolean
+  tool_calls?: ToolCall[]
+  tool_result?: { tool_call_id: string; name: string; result: string }
 }
 
 type ChatInput = {
   model: string
-  messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>
+  messages: Array<{
+    role: 'system' | 'user' | 'assistant' | 'tool'
+    content: string
+    tool_calls?: ToolCall[]
+    tool_call_id?: string
+  }>
   think?: boolean | 'medium'
   stream?: boolean
   numCtx?: number
+  tools?: Tool[]
 }
 
 @inject()
@@ -74,7 +83,7 @@ export class OllamaService {
         }
 
         this.openai = new OpenAI({
-          apiKey: 'nomad', // Required by SDK; not validated by Ollama/LM Studio/llama.cpp
+          apiKey: 'babylon', // Required by SDK; not validated by Ollama/LM Studio/llama.cpp
           baseURL: `${this.baseUrl}/v1`,
         })
       })()
@@ -197,56 +206,67 @@ export class OllamaService {
     }
   }
 
-  public async chat(chatRequest: ChatInput): Promise<NomadChatResponse> {
+  public async chat(chatRequest: ChatInput): Promise<BabylonChatResponse> {
     await this._ensureDependencies()
     if (!this.openai) {
       throw new Error('AI client is not initialized.')
     }
 
-    const params: any = {
-      model: chatRequest.model,
-      messages: chatRequest.messages as ChatCompletionMessageParam[],
-      stream: false,
-    }
-    if (chatRequest.think) {
-      params.think = chatRequest.think
-    }
-    if (chatRequest.numCtx) {
-      params.num_ctx = chatRequest.numCtx
-    }
+    const messages = [...chatRequest.messages] as ChatCompletionMessageParam[]
 
-    const response = await this.openai.chat.completions.create(params)
-    const choice = response.choices[0]
+    // Tool execution loop — runs until the model stops calling tools
+    while (true) {
+      const params: any = {
+        model: chatRequest.model,
+        messages,
+        stream: false,
+      }
+      if (chatRequest.think) params.think = chatRequest.think
+      if (chatRequest.numCtx) params.num_ctx = chatRequest.numCtx
+      if (chatRequest.tools?.length) params.tools = chatRequest.tools
 
-    return {
-      message: {
-        content: choice.message.content ?? '',
-        thinking: (choice.message as any).thinking ?? undefined,
-      },
-      done: true,
-      model: response.model,
+      const response = await this.openai.chat.completions.create(params)
+      const choice = response.choices[0]
+
+      if (choice.finish_reason === 'tool_calls' && choice.message.tool_calls?.length) {
+        messages.push(choice.message as ChatCompletionMessageParam)
+
+        for (const tc of choice.message.tool_calls) {
+          if (tc.type !== 'function') continue
+          const fn = (tc as any).function as { name: string; arguments: string }
+          let result: string
+          try {
+            const args = JSON.parse(fn.arguments || '{}')
+            result = await toolRegistry.execute(fn.name, args)
+          } catch (err) {
+            result = `Error: ${err instanceof Error ? err.message : String(err)}`
+            logger.warn(`[OllamaService] Tool "${fn.name}" failed: ${result}`)
+          }
+          messages.push({ role: 'tool', tool_call_id: tc.id, content: result! } as any)
+        }
+
+        continue
+      }
+
+      return {
+        message: {
+          content: choice.message.content ?? '',
+          thinking: (choice.message as any).thinking ?? undefined,
+        },
+        done: true,
+        model: response.model,
+      }
     }
   }
 
-  public async chatStream(chatRequest: ChatInput): Promise<AsyncIterable<NomadChatStreamChunk>> {
+  public async chatStream(chatRequest: ChatInput): Promise<AsyncIterable<BabylonChatStreamChunk>> {
     await this._ensureDependencies()
     if (!this.openai) {
       throw new Error('AI client is not initialized.')
     }
 
-    const params: any = {
-      model: chatRequest.model,
-      messages: chatRequest.messages as ChatCompletionMessageParam[],
-      stream: true,
-    }
-    if (chatRequest.think) {
-      params.think = chatRequest.think
-    }
-    if (chatRequest.numCtx) {
-      params.num_ctx = chatRequest.numCtx
-    }
-
-    const stream = (await this.openai.chat.completions.create(params)) as unknown as Stream<ChatCompletionChunk>
+    const openai = this.openai
+    const loggerRef = logger
 
     // Returns how many trailing chars of `text` could be the start of `tag`
     function partialTagSuffix(tag: string, text: string): number {
@@ -256,19 +276,35 @@ export class OllamaService {
       return 0
     }
 
-    async function* normalize(): AsyncGenerator<NomadChatStreamChunk> {
+    async function* streamWithThinkParsing(
+      rawStream: Stream<ChatCompletionChunk>,
+      toolCallsAcc: Map<number, { id: string; name: string; arguments: string }>
+    ): AsyncGenerator<BabylonChatStreamChunk> {
       // Stateful parser for <think>...</think> tags that may be split across chunks.
       // Ollama provides thinking natively via delta.thinking; OpenAI-compatible backends
       // (LM Studio, llama.cpp, etc.) embed them inline in delta.content.
       let tagBuffer = ''
       let inThink = false
 
-      for await (const chunk of stream) {
+      for await (const chunk of rawStream) {
         const delta = chunk.choices[0]?.delta
+
+        // Accumulate tool call deltas for later execution
+        if ((delta as any)?.tool_calls) {
+          for (const tc of (delta as any).tool_calls) {
+            if (!toolCallsAcc.has(tc.index)) {
+              toolCallsAcc.set(tc.index, { id: '', name: '', arguments: '' })
+            }
+            const acc = toolCallsAcc.get(tc.index)!
+            if (tc.id) acc.id = tc.id
+            if (tc.function?.name) acc.name += tc.function.name
+            if (tc.function?.arguments) acc.arguments += tc.function.arguments
+          }
+        }
+
         const nativeThinking: string = (delta as any)?.thinking ?? ''
         const rawContent: string = delta?.content ?? ''
 
-        // Parse <think> tags out of the content stream
         tagBuffer += rawContent
         let parsedContent = ''
         let parsedThinking = ''
@@ -301,17 +337,76 @@ export class OllamaService {
           }
         }
 
+        const finishReason = chunk.choices[0]?.finish_reason
         yield {
-          message: {
-            content: parsedContent,
-            thinking: nativeThinking + parsedThinking,
-          },
-          done: chunk.choices[0]?.finish_reason !== null && chunk.choices[0]?.finish_reason !== undefined,
+          message: { content: parsedContent, thinking: nativeThinking + parsedThinking || undefined },
+          done: finishReason !== null && finishReason !== undefined && finishReason !== 'tool_calls',
         }
       }
     }
 
-    return normalize()
+    async function* toolLoop(): AsyncGenerator<BabylonChatStreamChunk> {
+      const messages = [...chatRequest.messages] as ChatCompletionMessageParam[]
+
+      while (true) {
+        const params: any = {
+          model: chatRequest.model,
+          messages,
+          stream: true,
+        }
+        if (chatRequest.think) params.think = chatRequest.think
+        if (chatRequest.numCtx) params.num_ctx = chatRequest.numCtx
+        if (chatRequest.tools?.length) params.tools = chatRequest.tools
+
+        const rawStream = (await openai.chat.completions.create(params)) as unknown as Stream<ChatCompletionChunk>
+        const toolCallsAcc = new Map<number, { id: string; name: string; arguments: string }>()
+        let lastFinishReason: string | null = null
+
+        // Stream content chunks to client, accumulating any tool calls in parallel
+        for await (const chunk of streamWithThinkParsing(rawStream, toolCallsAcc)) {
+          yield chunk
+          if (chunk.done) lastFinishReason = 'stop'
+        }
+
+        // If tool calls were requested, execute them and continue the loop
+        if (toolCallsAcc.size > 0 && lastFinishReason !== 'stop') {
+          const toolCalls: ToolCall[] = Array.from(toolCallsAcc.values()).map((tc) => ({
+            id: tc.id,
+            type: 'function' as const,
+            function: { name: tc.name, arguments: tc.arguments },
+          }))
+
+          // Yield tool_calls chunk so the UI knows what's being invoked
+          yield { message: { content: '' }, done: false, tool_calls: toolCalls }
+
+          // Add assistant message with tool calls to history
+          messages.push({ role: 'assistant', content: '', tool_calls: toolCalls } as any)
+
+          // Execute each tool and stream results back to the UI
+          for (const tc of toolCalls) {
+            let result: string
+            try {
+              const args = JSON.parse(tc.function.arguments || '{}')
+              result = await toolRegistry.execute(tc.function.name, args)
+            } catch (err) {
+              result = `Error: ${err instanceof Error ? err.message : String(err)}`
+              loggerRef.warn(`[OllamaService] Tool "${tc.function.name}" failed: ${result}`)
+            }
+
+            yield { message: { content: '' }, done: false, tool_result: { tool_call_id: tc.id, name: tc.function.name, result } }
+            messages.push({ role: 'tool', tool_call_id: tc.id, content: result } as any)
+          }
+
+          // Continue loop — model will respond using the tool results
+          continue
+        }
+
+        // No tool calls, stream is complete
+        return
+      }
+    }
+
+    return toolLoop()
   }
 
   public async checkModelHasThinking(modelName: string): Promise<boolean> {
@@ -384,7 +479,7 @@ export class OllamaService {
     }
   }
 
-  public async getModels(includeEmbeddings = false): Promise<NomadInstalledModel[]> {
+  public async getModels(includeEmbeddings = false): Promise<BabylonInstalledModel[]> {
     await this._ensureDependencies()
     if (!this.baseUrl) {
       throw new Error('AI service is not initialized.')
@@ -398,7 +493,7 @@ export class OllamaService {
         throw new Error('Not an Ollama-compatible /api/tags response')
       }
       this.isOllamaNative = true
-      const models: NomadInstalledModel[] = response.data.models
+      const models: BabylonInstalledModel[] = response.data.models
       if (includeEmbeddings) return models
       return models.filter((m) => !m.name.includes('embed'))
     } catch {
@@ -407,7 +502,7 @@ export class OllamaService {
       logger.info('[OllamaService] /api/tags unavailable, falling back to /v1/models')
       try {
         const modelList = await this.openai!.models.list()
-        const models: NomadInstalledModel[] = modelList.data.map((m) => ({ name: m.id, size: 0 }))
+        const models: BabylonInstalledModel[] = modelList.data.map((m) => ({ name: m.id, size: 0 }))
         if (includeEmbeddings) return models
         return models.filter((m) => !m.name.includes('embed'))
       } catch (err) {
@@ -438,7 +533,7 @@ export class OllamaService {
       query: null,
       limit: 15,
     }
-  ): Promise<{ models: NomadOllamaModel[]; hasMore: boolean } | null> {
+  ): Promise<{ models: BabylonOllamaModel[]; hasMore: boolean } | null> {
     try {
       const models = await this.retrieveAndRefreshModels(sort, force)
       if (!models) {
@@ -492,7 +587,7 @@ export class OllamaService {
   private async retrieveAndRefreshModels(
     sort?: 'pulls' | 'name',
     force?: boolean
-  ): Promise<NomadOllamaModel[] | null> {
+  ): Promise<BabylonOllamaModel[] | null> {
     try {
       if (!force) {
         const cachedModels = await this.readModelsFromCache()
@@ -506,8 +601,8 @@ export class OllamaService {
 
       logger.info('[OllamaService] Fetching fresh available models from API')
 
-      const baseUrl = env.get('NOMAD_API_URL') || NOMAD_API_DEFAULT_BASE_URL
-      const fullUrl = new URL(NOMAD_MODELS_API_PATH, baseUrl).toString()
+      const baseUrl = env.get('BABYLON_API_URL') || BABYLON_API_DEFAULT_BASE_URL
+      const fullUrl = new URL(BABYLON_MODELS_API_PATH, baseUrl).toString()
 
       const response = await axios.get(fullUrl)
       if (!response.data || !Array.isArray(response.data.models)) {
@@ -517,7 +612,7 @@ export class OllamaService {
         return null
       }
 
-      const rawModels = response.data.models as NomadOllamaModel[]
+      const rawModels = response.data.models as BabylonOllamaModel[]
 
       const noCloud = rawModels
         .map((model) => ({
@@ -530,13 +625,13 @@ export class OllamaService {
       return this.sortModels(noCloud, sort)
     } catch (error) {
       logger.error(
-        `[OllamaService] Failed to retrieve models from Nomad API: ${error instanceof Error ? error.message : error}`
+        `[OllamaService] Failed to retrieve models from Babylon API: ${error instanceof Error ? error.message : error}`
       )
       return null
     }
   }
 
-  private async readModelsFromCache(): Promise<NomadOllamaModel[] | null> {
+  private async readModelsFromCache(): Promise<BabylonOllamaModel[] | null> {
     try {
       const stats = await fs.stat(MODELS_CACHE_FILE)
       const cacheAge = Date.now() - stats.mtimeMs
@@ -547,7 +642,7 @@ export class OllamaService {
       }
 
       const cacheData = await fs.readFile(MODELS_CACHE_FILE, 'utf-8')
-      const models = JSON.parse(cacheData) as NomadOllamaModel[]
+      const models = JSON.parse(cacheData) as BabylonOllamaModel[]
 
       if (!Array.isArray(models)) {
         logger.warn('[OllamaService] Invalid cache format, will fetch fresh data')
@@ -565,7 +660,7 @@ export class OllamaService {
     }
   }
 
-  private async writeModelsToCache(models: NomadOllamaModel[]): Promise<void> {
+  private async writeModelsToCache(models: BabylonOllamaModel[]): Promise<void> {
     try {
       await fs.mkdir(path.dirname(MODELS_CACHE_FILE), { recursive: true })
       await fs.writeFile(MODELS_CACHE_FILE, JSON.stringify(models, null, 2), 'utf-8')
@@ -577,7 +672,7 @@ export class OllamaService {
     }
   }
 
-  private sortModels(models: NomadOllamaModel[], sort?: 'pulls' | 'name'): NomadOllamaModel[] {
+  private sortModels(models: BabylonOllamaModel[], sort?: 'pulls' | 'name'): BabylonOllamaModel[] {
     if (sort === 'pulls') {
       models.sort((a, b) => {
         const parsePulls = (pulls: string) => {
@@ -637,8 +732,8 @@ export class OllamaService {
     logger.info(`[OllamaService] Download progress for model "${model}": ${percent}%`)
   }
 
-  private fuseSearchModels(models: NomadOllamaModel[], query: string): NomadOllamaModel[] {
-    const options: IFuseOptions<NomadOllamaModel> = {
+  private fuseSearchModels(models: BabylonOllamaModel[], query: string): BabylonOllamaModel[] {
+    const options: IFuseOptions<BabylonOllamaModel> = {
       ignoreDiacritics: true,
       keys: ['name', 'description', 'tags.name'],
       threshold: 0.3,

@@ -7,7 +7,7 @@ import { DownloadJobWithProgress, WikipediaState } from '../../types/downloads'
 import { EmbedJobWithProgress } from '../../types/rag'
 import type { CategoryWithStatus, CollectionWithStatus, ContentUpdateCheckResult, ResourceUpdateInfo } from '../../types/collections'
 import { catchInternal } from './util'
-import { NomadChatResponse, NomadInstalledModel, NomadOllamaModel, OllamaChatRequest } from '../../types/ollama'
+import { BabylonChatResponse, BabylonInstalledModel, BabylonOllamaModel, OllamaChatRequest } from '../../types/ollama'
 import BenchmarkResult from '#models/benchmark_result'
 import { BenchmarkType, RunBenchmarkResponse, SubmitBenchmarkResponse, UpdateBuilderTagResponse } from '../../types/benchmark'
 
@@ -257,7 +257,7 @@ class API {
 
   async getInstalledModels() {
     return catchInternal(async () => {
-      const response = await this.client.get<NomadInstalledModel[]>('/ollama/installed-models')
+      const response = await this.client.get<BabylonInstalledModel[]>('/ollama/installed-models')
       return response.data
     })()
   }
@@ -265,7 +265,7 @@ class API {
   async getAvailableModels(params: { query?: string; recommendedOnly?: boolean; limit?: number; force?: boolean }) {
     return catchInternal(async () => {
       const response = await this.client.get<{
-        models: NomadOllamaModel[]
+        models: BabylonOllamaModel[]
         hasMore: boolean
       }>('/ollama/models', {
         params: { sort: 'pulls', ...params },
@@ -276,7 +276,7 @@ class API {
 
   async sendChatMessage(chatRequest: OllamaChatRequest) {
     return catchInternal(async () => {
-      const response = await this.client.post<NomadChatResponse>('/ollama/chat', chatRequest)
+      const response = await this.client.post<BabylonChatResponse>('/ollama/chat', chatRequest)
       return response.data
     })()
   }

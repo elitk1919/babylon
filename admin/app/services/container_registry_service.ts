@@ -314,7 +314,7 @@ export class ContainerRegistryService {
       // Try v-prefixed first since it's more common
       const vRes = await this.fetchWithRetry(
         `https://api.github.com/repos${cleanPath}/releases/tags/${vTag}`,
-        { headers: { Accept: 'application/vnd.github.v3+json', 'User-Agent': 'ProjectNomad' } },
+        { headers: { Accept: 'application/vnd.github.v3+json', 'User-Agent': 'Babylon' } },
         1
       )
       if (vRes.ok) {
@@ -324,7 +324,7 @@ export class ContainerRegistryService {
 
       const plainRes = await this.fetchWithRetry(
         `https://api.github.com/repos${cleanPath}/releases/tags/${strippedTag}`,
-        { headers: { Accept: 'application/vnd.github.v3+json', 'User-Agent': 'ProjectNomad' } },
+        { headers: { Accept: 'application/vnd.github.v3+json', 'User-Agent': 'Babylon' } },
         1
       )
       if (plainRes.ok) {

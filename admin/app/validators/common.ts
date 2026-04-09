@@ -6,7 +6,7 @@ import vine from '@vinejs/vine'
  * or link-local/metadata endpoints (e.g. cloud instance metadata at 169.254.x.x).
  *
  * RFC1918 private ranges (10.x, 172.16-31.x, 192.168.x) are intentionally
- * ALLOWED because NOMAD is a LAN appliance and users may host content
+ * ALLOWED because Babylon is a LAN appliance and users may host content
  * mirrors on their local network.
  *
  * Throws an error if the URL is a loopback or link-local address.

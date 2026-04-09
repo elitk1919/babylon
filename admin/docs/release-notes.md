@@ -4,7 +4,7 @@
 
 ### Features
 - **AI Assistant**: Added support for remote OpenAI-compatible hosts (e.g. Ollama, LM Studio, etc.) to support running models on seperate hardware from the Command Center host. Thanks @hestela for the contribution!
-- **AI Assistant**: Disabled Ollama Cloud support (not compatible with NOMAD's architecture) and added support for flash_attn to improve performance of compatible models. Thanks @hestela for the contribution!
+- **AI Assistant**: Disabled Ollama Cloud support (not compatible with Babylon's architecture) and added support for flash_attn to improve performance of compatible models. Thanks @hestela for the contribution!
 - **Information Library (Kiwix)**: The Kiwix container now uses an XML library file approach instead of a glob-based approach to inform the Kiwix container of available ZIM files. This allows for much more robust handling of ZIM files and avoids issues with the container failing to start due to incomplete/corrupt ZIM files being present in the storage directory. Thanks @jakeaturner for the contribution!
 - **RAG**: Added support for EPUB file embedding into the Knowledge Base. Thanks @arn6694 for the contribution!
 - **RAG**: Added support for multiple file uploads (<=5, 100mb each) to the Knowledge Base. Thanks @jakeaturner for the contribution!
@@ -28,7 +28,7 @@
 ### Improvements
 
 - **Dependencies**: Updated various dependencies to close security vulnerabilities and improve stability
-- **Docker**: NOMAD now adds 'com.docker.compose.project': 'project-nomad-managed' and 'io.project-nomad.managed': 'true' labels to all containers installed via the Command Center to improve compatibility with other Docker management tools and make it easier to identify and manage NOMAD containers. Thanks @techyogi for the contribution!
+- **Docker**: Babylon now adds 'com.docker.compose.project': 'project-nomad-managed' and 'io.project-nomad.managed': 'true' labels to all containers installed via the Command Center to improve compatibility with other Docker management tools and make it easier to identify and manage Babylon containers. Thanks @techyogi for the contribution!
 - **Docs**: Added a simple API reference for power users and developers. Thanks @hestela for the contribution!
 - **Docs**: Re-formatted the Quick Install command into multiple lines for better readability in the README. Thanks @samsara-02 for the contribution!
 - **Docs**: Updated the CONTRIBUTING and FAQ guides with the latest information and clarified some common questions. Thanks @jakeaturner for the contribution!
@@ -64,7 +64,7 @@
 - **Night Ops**: Added our most requested feature — a dark mode theme for the Command Center interface! Activate it from the footer and enjoy the sleek new look during your late-night missions. Thanks @chriscrosstalk for the contribution!
 - **Debug Info**: Added a new "Debug Info" modal accessible from the footer that provides detailed system and application information for troubleshooting and support. Thanks @chriscrosstalk for the contribution!
 - **Support the Project**: Added a new "Support the Project" page in settings with links to community resources, donation options, and ways to contribute.
-- **Install**: The main Nomad image is now fully self-contained and directly usable with Docker Compose, allowing for more flexible and customizable installations without relying on external scripts. The image remains fully backwards compatible with existing installations, and the install script has been updated to reflect the simpler deployment process.
+- **Install**: The main Babylon image is now fully self-contained and directly usable with Docker Compose, allowing for more flexible and customizable installations without relying on external scripts. The image remains fully backwards compatible with existing installations, and the install script has been updated to reflect the simpler deployment process.
 
 ### Bug Fixes
 - **Settings**: Storage usage display now prefers real block devices over tempfs. Thanks @Bortlesboat for the fix!
@@ -82,7 +82,7 @@
 - **Ollama**: The detected GPU type is now persisted in the database for more reliable configuration and troubleshooting across updates and restarts. Thanks @chriscrosstalk for the contribution!
 - **Downloads**: Users can now dismiss failed download notifications to reduce clutter in the UI. Thanks @chriscrosstalk for the contribution!
 - **Logging**: Changed the default log level to "info" to reduce noise and focus on important messages. Thanks @traxeon for the suggestion!
-- **Logging**: Nomad's internal logger now creates it's own log directory on startup if it doesn't already exist to prevent errors on fresh installs where the logs directory hasn't been created yet.
+- **Logging**: Babylon's internal logger now creates it's own log directory on startup if it doesn't already exist to prevent errors on fresh installs where the logs directory hasn't been created yet.
 - **Dozzle**: Dozzle shell access and container actions are now disabled by default. Thanks @traxeon for the recommendation!
 - **MySQL & Redis**: Removed port exposure to host by default for improved security. Ports can still be exposed manually if needed. Thanks @traxeon for the recommendation!
 - **Dependencies**: Various dependency updates to close security vulnerabilities and improve stability
@@ -96,7 +96,7 @@
 ### Features
 - **AI Assistant**: Added improved user guidance for troubleshooting GPU pass-through issues
 - **AI Assistant**: The last used model is now automatically selected when a new chat is started
-- **Settings**: Nomad now automatically performs nightly checks for available app updates, and users can select and apply updates from the Apps page in Settings
+- **Settings**: Babylon now automatically performs nightly checks for available app updates, and users can select and apply updates from the Apps page in Settings
 
 ### Bug Fixes
 - **Settings**: Fixed an issue where the AI Assistant settings page would be shown in navigation even if the AI Assistant was not installed, thus causing 404 errors when clicked
@@ -240,7 +240,7 @@
 ### 🚀 Features
 
 - **Content Manager**: Display friendly names (Title and Summary) instead of raw filenames for ZIM files
-- **AI Knowledge Base**: Automatically add NOMAD documentation to AI Knowledge Base on install
+- **AI Knowledge Base**: Automatically add Babylon documentation to AI Knowledge Base on install
 
 ### 🐛 Bug Fixes
 
@@ -299,7 +299,7 @@
 
 ### 🚀 Features
 
-- **Benchmark**: Builder Tag system — claim leaderboard spots with NOMAD-themed tags (e.g., "Tactical-Llama-1234")
+- **Benchmark**: Builder Tag system — claim leaderboard spots with Babylon-themed tags (e.g., "Tactical-Llama-1234")
 - **Benchmark**: Full benchmark with AI now required for community sharing; HMAC-signed submissions
 - **Release Notes**: Subscribe to release notes via email
 - **Maps**: Automatically download base map assets if missing
@@ -331,7 +331,7 @@
 
 ### 🚀 Features
 
-- **System Benchmark**: Hardware scoring with NOMAD Score, circular gauges, and community leaderboard submission
+- **System Benchmark**: Hardware scoring with Babylon Score, circular gauges, and community leaderboard submission
 - **Dashboard**: User-friendly app names with "Powered by" open source attribution
 - **Settings**: Updated nomenclature and added tiered content collections to Settings pages
 - **Queues**: Support working all queues with a single command
@@ -368,7 +368,7 @@
 - **Easy Setup Wizard**: Redesigned Step 1 with user-friendly capability cards instead of app names
 - **Tiered Collections**: Category-based content collections with Essential, Standard, and Comprehensive tiers
 - **Storage Projection Bar**: Visual disk usage indicator showing projected additions during Easy Setup
-- **Windows Support**: Docker Desktop support for local development with platform detection and NOMAD_STORAGE_PATH env var
+- **Windows Support**: Docker Desktop support for local development with platform detection and BABYLON_STORAGE_PATH env var
 - **Documentation**: Comprehensive in-app documentation (Home, Getting Started, FAQ, Use Cases)
 
 ### ✨ Improvements
@@ -548,7 +548,7 @@
 
 ### 🚀 New Features
 
-- Uninstall script now removes non-management Nomad app containers
+- Uninstall script now removes non-management Babylon app containers
 
 ### ✨ Improvements
 
@@ -573,7 +573,7 @@
     - Fixed renderer file permissions
     - Fixed absolute host path issue
 - **ZIM Manager**:
-    - Initial ZIM download now hosted in Project Nomad GitHub repo for better availability
+    - Initial ZIM download now hosted in Project Nomad GitHub repo for better availability (upstream)
 
 ---
 
@@ -597,7 +597,7 @@
 
 ### ⚠️ Breaking Changes
 
-- **Container Naming**: As a result of standardized container naming, it is recommend that you do a fresh install of Project N.O.M.A.D. and any apps to avoid potential conflicts/duplication of containers
+- **Container Naming**: As a result of standardized container naming, it is recommend that you do a fresh install of Babylon and any apps to avoid potential conflicts/duplication of containers
 
 ### 📚 Documentation
 
@@ -627,7 +627,7 @@
 
 ## Support
 
-- **Discord:** [Join the Community](https://discord.com/invite/crosstalksolutions) — Get help, share your builds, and connect with other NOMAD users
+- **Discord:** [Join the Community](https://discord.com/invite/crosstalksolutions) — Get help, share your builds, and connect with other Babylon users
 - **Bug Reports:** [GitHub Issues](https://github.com/Crosstalk-Solutions/project-nomad/issues)
 - **Website:** [www.projectnomad.us](https://www.projectnomad.us)
 

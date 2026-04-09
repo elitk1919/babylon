@@ -1,0 +1,40 @@
+# Babylon dev compose override
+#
+# Overrides install/management_compose.yaml with local build and dev-friendly defaults.
+#
+# Usage:
+#   docker compose -f install/management_compose.yaml -f docker-compose.dev.yaml up -d --build
+#
+# To rebuild after code changes:
+#   docker compose -f install/management_compose.yaml -f docker-compose.dev.yaml up -d --build admin
+#
+# Ollama on your host machine is reachable from inside the container at:
+#   http://host.docker.internal:11434
+# Configure this in the Babylon UI under Settings > AI Assistant after first run.
+
+services:
+  admin:
+    image: babylon:dev
+    build:
+      context: .
+      dockerfile: Dockerfile
+    pull_policy: never
+    environment:
+      - APP_KEY=babylon-dev-key-not-for-production
+      - URL=http://localhost:8080
+      - DB_PASSWORD=babylon_dev
+      - LOG_LEVEL=debug
+      - DISABLE_COMPRESSION=true
+    volumes:
+      - ./dev-storage:/app/storage  # Use local dev-storage dir instead of /opt/babylon
+
+  mysql:
+    environment:
+      - MYSQL_ROOT_PASSWORD=babylon_dev_root
+      - MYSQL_PASSWORD=babylon_dev
+
+  updater:
+    profiles: [full]  # Exclude from default dev startup
+
+  disk-collector:
+    profiles: [full]  # Exclude from default dev startup

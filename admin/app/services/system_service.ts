@@ -6,8 +6,8 @@ import logger from '@adonisjs/core/services/logger'
 import si from 'systeminformation'
 import {
   GpuHealthStatus,
-  NomadDiskInfo,
-  NomadDiskInfoRaw,
+  BabylonDiskInfo,
+  BabylonDiskInfoRaw,
   SystemInformationResponse,
 } from '../../types/system.js'
 import { SERVICE_NAMES } from '../../constants/service_names.js'
@@ -24,7 +24,7 @@ import { invalidateAssistantNameCache } from '../../config/inertia.js'
 @inject()
 export class SystemService {
   private static appVersion: string | null = null
-  private static diskInfoFile = '/storage/nomad-disk-info.json'
+  private static diskInfoFile = '/storage/babylon-disk-info.json'
 
   constructor(private dockerService: DockerService) {}
 
@@ -297,8 +297,8 @@ export class SystemService {
         si.graphics(),
       ])
 
-      let diskInfo: NomadDiskInfoRaw | undefined
-      let disk: NomadDiskInfo[] = []
+      let diskInfo: BabylonDiskInfoRaw | undefined
+      let disk: BabylonDiskInfo[] = []
 
       try {
         const diskInfoRawString = await getFile(
@@ -310,7 +310,7 @@ export class SystemService {
           diskInfoRawString
             ? JSON.parse(diskInfoRawString.toString())
             : { diskLayout: { blockdevices: [] }, fsSize: [] }
-        ) as NomadDiskInfoRaw
+        ) as BabylonDiskInfoRaw
 
         disk = this.calculateDiskUsage(diskInfo)
       } catch (error) {
@@ -529,7 +529,7 @@ export class SystemService {
     ])
 
     const lines: string[] = [
-      'Project NOMAD Debug Info',
+      'Babylon Debug Info',
       '========================',
       `App Version: ${appVersion}`,
       `Environment: ${environment}`,
@@ -694,7 +694,7 @@ export class SystemService {
     }
   }
 
-  private calculateDiskUsage(diskInfo: NomadDiskInfoRaw): NomadDiskInfo[] {
+  private calculateDiskUsage(diskInfo: BabylonDiskInfoRaw): BabylonDiskInfo[] {
     const { diskLayout, fsSize } = diskInfo
 
     if (!diskLayout?.blockdevices || !fsSize) {
@@ -703,7 +703,7 @@ export class SystemService {
 
     // Deduplicate: same device path mounted in multiple places (Docker bind-mounts)
     // Keep the entry with the largest size — that's the real partition
-    const deduped = new Map<string, NomadDiskInfoRaw['fsSize'][0]>()
+    const deduped = new Map<string, BabylonDiskInfoRaw['fsSize'][0]>()
     for (const entry of fsSize) {
       const existing = deduped.get(entry.fs)
       if (!existing || entry.size > existing.size) {

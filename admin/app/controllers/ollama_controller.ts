@@ -11,7 +11,7 @@ import type { HttpContext } from '@adonisjs/core/http'
 import { DEFAULT_QUERY_REWRITE_MODEL, RAG_CONTEXT_LIMITS, SYSTEM_PROMPTS } from '../../constants/ollama.js'
 import { SERVICE_NAMES } from '../../constants/service_names.js'
 import logger from '@adonisjs/core/services/logger'
-type Message = { role: 'system' | 'user' | 'assistant'; content: string }
+type Message = { role: 'system' | 'user' | 'assistant' | 'tool'; content: string }
 
 @inject()
 export default class OllamaController {
@@ -127,7 +127,8 @@ export default class OllamaController {
       const think: boolean | 'medium' = thinkingCapability ? (reqData.model.startsWith('gpt-oss') ? 'medium' : true) : false
 
       // Separate sessionId from the Ollama request payload — Ollama rejects unknown fields
-      const { sessionId, ...ollamaRequest } = reqData
+      const { sessionId, tools, ...ollamaRequest } = reqData
+      const resolvedTools = tools?.length ? tools : undefined
 
       // Save user message to DB before streaming if sessionId provided
       let userContent: string | null = null
@@ -142,7 +143,7 @@ export default class OllamaController {
       if (reqData.stream) {
         logger.debug(`[OllamaController] Initiating streaming response for model: "${reqData.model}" with think: ${think}`)
         // Headers already flushed above
-        const stream = await this.ollamaService.chatStream({ ...ollamaRequest, think, numCtx })
+        const stream = await this.ollamaService.chatStream({ ...ollamaRequest, think, numCtx, tools: resolvedTools })
         let fullContent = ''
         for await (const chunk of stream) {
           if (chunk.message?.content) {
@@ -166,7 +167,7 @@ export default class OllamaController {
       }
 
       // Non-streaming (legacy) path
-      const result = await this.ollamaService.chat({ ...ollamaRequest, think, numCtx })
+      const result = await this.ollamaService.chat({ ...ollamaRequest, think, numCtx, tools: resolvedTools })
 
       if (sessionId && result?.message?.content) {
         await this.chatService.addMessage(sessionId, 'assistant', result.message.content)
@@ -263,8 +264,8 @@ export default class OllamaController {
 
     // Mirror post-install side effects: disable suggestions, trigger docs discovery
     await KVStore.setValue('chat.suggestionsEnabled', false)
-    this.ragService.discoverNomadDocs().catch((error) => {
-      logger.error('[OllamaController] Failed to discover Nomad docs:', error)
+    this.ragService.discoverBabylonDocs().catch((error) => {
+      logger.error('[OllamaController] Failed to discover Babylon docs:', error)
     })
 
     return { success: true, message: 'Remote Ollama configured.' }

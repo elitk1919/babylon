@@ -1,12 +1,12 @@
-# What Can You Do With N.O.M.A.D.?
+# What Can You Do With Babylon?
 
-N.O.M.A.D. is designed to be your information lifeline when internet isn't available. Here's how different people use it.
+Babylon is designed to be your information lifeline when internet isn't available. Here's how different people use it.
 
 ---
 
 ## Emergency Preparedness
 
-When disasters strike, internet and cell service often go down first. N.O.M.A.D. keeps critical information at your fingertips.
+When disasters strike, internet and cell service often go down first. Babylon keeps critical information at your fingertips.
 
 **What you can do:**
 - Look up first aid and emergency medical procedures
@@ -184,13 +184,13 @@ Add your own documents to the [Knowledge Base](/knowledge-base) — emergency pl
 Keep your server updated while you have internet. You never know when you'll need to go offline.
 
 ### Step 5: Practice
-Try using N.O.M.A.D. before you need it. Familiarity with the tools makes them more useful in a crisis.
+Try using Babylon before you need it. Familiarity with the tools makes them more useful in a crisis.
 
 ---
 
 ## Need Something Specific?
 
-N.O.M.A.D. content is customizable. If you don't see what you need:
+Babylon content is customizable. If you don't see what you need:
 
 1. **Browse [Content Explorer](/settings/zim/remote-explorer)** — Thousands of ZIM files including Wikipedia packages
 2. **Check [Content Manager](/settings/zim)** — Manage your installed content

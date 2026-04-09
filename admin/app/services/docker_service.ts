@@ -19,7 +19,7 @@ import { KIWIX_LIBRARY_CMD } from '../../constants/kiwix.js'
 export class DockerService {
   public docker: Docker
   private activeInstallations: Set<string> = new Set()
-  public static NOMAD_NETWORK = 'project-nomad_default'
+  public static BABYLON_NETWORK = 'babylon_default'
 
   private _servicesStatusCache: { data: { service_name: string; status: string }[]; expiresAt: number } | null = null
   private _servicesStatusInflight: Promise<{ service_name: string; status: string }[]> | null = null
@@ -119,7 +119,7 @@ export class DockerService {
   }
 
   /**
-   * Fetches the status of all Docker containers related to Nomad services. (those prefixed with 'nomad_')
+   * Fetches the status of all Docker containers related to Babylon services. (those prefixed with 'babylon_')
    * Results are cached for 5 seconds and concurrent callers share a single in-flight request,
    * preventing Docker socket congestion during rapid page navigation.
    */
@@ -156,7 +156,7 @@ export class DockerService {
       const containerMap = new Map<string, Docker.ContainerInfo>()
       containers.forEach((container) => {
         const name = container.Names[0]?.replace('/', '')
-        if (name && name.startsWith('nomad_')) {
+        if (name && name.startsWith('babylon_')) {
           containerMap.set(name, container)
         }
       })
@@ -576,11 +576,11 @@ export class DockerService {
         ...(containerConfig?.ExposedPorts && { ExposedPorts: containerConfig.ExposedPorts }),
         Env: [...(containerConfig?.Env ?? []), ...ollamaEnv],
         ...(service.container_command ? { Cmd: service.container_command.split(' ') } : {}),
-        // Ensure container is attached to the Nomad docker network in production
+        // Ensure container is attached to the Babylon docker network in production
         ...(process.env.NODE_ENV === 'production' && {
           NetworkingConfig: {
             EndpointsConfig: {
-              [DockerService.NOMAD_NETWORK]: {},
+              [DockerService.BABYLON_NETWORK]: {},
             },
           },
         }),
@@ -606,19 +606,19 @@ export class DockerService {
       // Remove from active installs tracking
       this.activeInstallations.delete(service.service_name)
 
-      // If Ollama was just installed, trigger Nomad docs discovery and embedding
+      // If Ollama was just installed, trigger Babylon docs discovery and embedding
       if (service.service_name === SERVICE_NAMES.OLLAMA) {
         logger.info('[DockerService] Ollama installation complete. Default behavior is to not enable chat suggestions.')
         await KVStore.setValue('chat.suggestionsEnabled', false)
 
-        logger.info('[DockerService] Ollama installation complete. Triggering Nomad docs discovery...')
+        logger.info('[DockerService] Ollama installation complete. Triggering Babylon docs discovery...')
         
         // Need to use dynamic imports here to avoid circular dependency
         const ollamaService = new (await import('./ollama_service.js')).OllamaService()
         const ragService = new (await import('./rag_service.js')).RagService(this, ollamaService)
 
-        ragService.discoverNomadDocs().catch((error) => {
-          logger.error('[DockerService] Failed to discover Nomad docs:', error)
+        ragService.discoverBabylonDocs().catch((error) => {
+          logger.error('[DockerService] Failed to discover Babylon docs:', error)
         })
       }
 
@@ -832,7 +832,7 @@ export class DockerService {
         ...(process.env.NODE_ENV === 'production' && {
           NetworkingConfig: {
             EndpointsConfig: {
-              [DockerService.NOMAD_NETWORK]: {},
+              [DockerService.BABYLON_NETWORK]: {},
             },
           },
         }),

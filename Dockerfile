@@ -29,14 +29,13 @@ ARG BUILD_DATE
 ARG VCS_REF
 
 # Labels
-LABEL org.opencontainers.image.title="Project N.O.M.A.D" \
-      org.opencontainers.image.description="The Project N.O.M.A.D Official Docker image" \
+LABEL org.opencontainers.image.title="Babylon" \
+      org.opencontainers.image.description="Babylon — offline-first knowledge and AI server with MCP tool calling support" \
       org.opencontainers.image.version="${VERSION}" \
       org.opencontainers.image.created="${BUILD_DATE}" \
       org.opencontainers.image.revision="${VCS_REF}" \
-      org.opencontainers.image.vendor="Crosstalk Solutions, LLC" \
-      org.opencontainers.image.documentation="https://github.com/CrosstalkSolutions/project-nomad/blob/main/README.md" \
-      org.opencontainers.image.source="https://github.com/CrosstalkSolutions/project-nomad" \
+      org.opencontainers.image.source="https://github.com/elitk1919/babylon" \
+      org.opencontainers.image.documentation="https://github.com/elitk1919/babylon/blob/main/README.md" \
       org.opencontainers.image.licenses="Apache-2.0"
 
 ENV NODE_ENV=production
@@ -52,7 +51,7 @@ COPY README.md /app/README.md
 
 # Copy entrypoint script and ensure it's executable
 COPY install/entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
+RUN sed -i 's/\r//' /usr/local/bin/entrypoint.sh && chmod +x /usr/local/bin/entrypoint.sh
 
 EXPOSE 8080
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

@@ -26,7 +26,7 @@ export class RunDownloadJob {
 
   /** Redis key used to signal cancellation across processes */
   static cancelKey(jobId: string): string {
-    return `nomad:download:cancel:${jobId}`
+    return `babylon:download:cancel:${jobId}`
   }
 
   /** Signal cancellation via Redis so the worker process can pick it up */
@@ -145,7 +145,7 @@ export class RunDownloadJob {
               await zimService.downloadRemoteSuccessCallback([url], true)
 
               // Only dispatch embedding job if AI Assistant (Ollama) is installed
-              const ollamaUrl = await dockerService.getServiceURL('nomad_ollama')
+              const ollamaUrl = await dockerService.getServiceURL('babylon_ollama')
               if (ollamaUrl) {
                 try {
                   await EmbedFileJob.dispatch({

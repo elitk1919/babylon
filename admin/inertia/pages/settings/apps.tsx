@@ -92,7 +92,7 @@ export default function SettingsPage(props: { system: { services: ServiceSlim[] 
       >
         <p className="text-text-primary">
           Are you sure you want to install {service.friendly_name || service.service_name}? This
-          will start the service and make it available in your Project N.O.M.A.D. instance. It may
+          will start the service and make it available in your Babylon instance. It may
           take some time to complete.
         </p>
       </StyledModal>,
@@ -339,7 +339,7 @@ export default function SettingsPage(props: { system: { services: ServiceSlim[] 
             <div>
               <h1 className="text-4xl font-semibold">Apps</h1>
               <p className="text-text-muted mt-1">
-                Manage the applications that are available in your Project N.O.M.A.D. instance. Nightly update checks will automatically detect when new versions of these apps are available.
+                Manage the applications that are available in your Babylon instance. Nightly update checks will automatically detect when new versions of these apps are available.
               </p>
             </div>
             <StyledButton

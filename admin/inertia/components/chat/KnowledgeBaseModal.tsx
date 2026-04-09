@@ -128,7 +128,7 @@ export default function KnowledgeBaseModal({ aiAssistantName = "AI Assistant", o
         confirmVariant='primary'
       >
         <p className='text-text-primary'>
-          This will scan the NOMAD's storage directories for any new files and queue them for processing. This is useful if you've manually added files to the storage or want to ensure everything is up to date.
+          This will scan Babylon's storage directories for any new files and queue them for processing. This is useful if you've manually added files to the storage or want to ensure everything is up to date.
           This may cause a temporary increase in resource usage if new files are found and being processed. Are you sure you want to proceed?
         </p>
       </StyledModal>,
@@ -186,7 +186,7 @@ export default function KnowledgeBaseModal({ aiAssistantName = "AI Assistant", o
                       {aiAssistantName} Knowledge Base Integration
                     </p>
                     <p className="text-sm text-desert-stone">
-                      When you upload documents to your Knowledge Base, NOMAD processes and embeds
+                      When you upload documents to your Knowledge Base, Babylon processes and embeds
                       the content, making it directly accessible to {aiAssistantName}. This allows{' '}
                       {aiAssistantName} to reference your specific documents during conversations,
                       providing more accurate and personalized responses based on your uploaded
@@ -203,10 +203,10 @@ export default function KnowledgeBaseModal({ aiAssistantName = "AI Assistant", o
                       Enhanced Document Processing with OCR
                     </p>
                     <p className="text-sm text-desert-stone">
-                      NOMAD includes built-in Optical Character Recognition (OCR) capabilities,
+                      Babylon includes built-in Optical Character Recognition (OCR) capabilities,
                       allowing it to extract text from image-based documents such as scanned PDFs or
                       photos. This means that even if your documents are not in a standard text
-                      format, NOMAD can still process and embed their content for AI access.
+                      format, Babylon can still process and embed their content for AI access.
                     </p>
                   </div>
                 </div>
@@ -219,7 +219,7 @@ export default function KnowledgeBaseModal({ aiAssistantName = "AI Assistant", o
                       Information Library Integration
                     </p>
                     <p className="text-sm text-desert-stone">
-                      NOMAD will automatically discover and extract any content you save to your
+                      Babylon will automatically discover and extract any content you save to your
                       Information Library (if installed), making it instantly available to {aiAssistantName} without any extra steps.
                     </p>
                   </div>

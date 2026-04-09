@@ -26,13 +26,13 @@ export default function MapComponent() {
   const [markerColor, setMarkerColor] = useState<PinColorId>('orange')
   const [selectedMarkerId, setSelectedMarkerId] = useState<number | null>(null)
   const [scaleUnit, setScaleUnit] = useState<ScaleUnit>(
-    () => (localStorage.getItem('nomad:map-scale-unit') as ScaleUnit) || 'metric'
+    () => (localStorage.getItem('babylon:map-scale-unit') as ScaleUnit) || 'metric'
   )
 
   const toggleScaleUnit = useCallback(() => {
     setScaleUnit((prev) => {
       const next = prev === 'metric' ? 'imperial' : 'metric'
-      localStorage.setItem('nomad:map-scale-unit', next)
+      localStorage.setItem('babylon:map-scale-unit', next)
       return next
     })
   }, [])

@@ -5,12 +5,24 @@ export const chatSchema = vine.compile(
     model: vine.string().trim().minLength(1),
     messages: vine.array(
       vine.object({
-        role: vine.enum(['system', 'user', 'assistant'] as const),
+        role: vine.enum(['system', 'user', 'assistant', 'tool'] as const),
         content: vine.string(),
       })
     ),
     stream: vine.boolean().optional(),
     sessionId: vine.number().positive().optional(),
+    tools: vine
+      .array(
+        vine.object({
+          type: vine.literal('function'),
+          function: vine.object({
+            name: vine.string().trim().minLength(1),
+            description: vine.string().optional(),
+            parameters: vine.any().optional(),
+          }),
+        })
+      )
+      .optional(),
   })
 )
 

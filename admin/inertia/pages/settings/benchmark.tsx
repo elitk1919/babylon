@@ -267,7 +267,7 @@ export default function BenchmarkPage(props: {
       {
         status: 'calculating_score',
         progress: 95,
-        message: 'Calculating NOMAD score...',
+        message: 'Calculating Babylon score...',
         label: 'Calculating Score',
         duration: 2000,
       },
@@ -364,7 +364,7 @@ export default function BenchmarkPage(props: {
           <div className="mb-8">
             <h1 className="text-4xl font-bold text-desert-green mb-2">System Benchmark</h1>
             <p className="text-desert-stone-dark">
-              Measure your server's performance and compare with the NOMAD community
+              Measure your server's performance and compare with the Babylon community
             </p>
           </div>
 
@@ -408,7 +408,7 @@ export default function BenchmarkPage(props: {
                     <Alert
                       type="warning"
                       title={`${aiAssistantName} Required`}
-                      message={`Full benchmark requires ${aiAssistantName} to be installed. Install it to measure your complete NOMAD capability and share results with the community.`}
+                      message={`Full benchmark requires ${aiAssistantName} to be installed. Install it to measure your complete Babylon capability and share results with the community.`}
                       variant="bordered"
                       dismissible
                       onDismiss={() => setShowAIRequiredAlert(false)}
@@ -479,7 +479,7 @@ export default function BenchmarkPage(props: {
               <section className="mb-12">
                 <h2 className="text-2xl font-bold text-desert-green mb-6 flex items-center gap-2">
                   <div className="w-1 h-6 bg-desert-green" />
-                  NOMAD Score
+                  Babylon Score
                 </h2>
 
                 <div className="bg-desert-white rounded-lg p-8 border border-desert-stone-light shadow-sm">
@@ -487,7 +487,7 @@ export default function BenchmarkPage(props: {
                     <div className="shrink-0">
                       <CircularGauge
                         value={latestResult.nomad_score}
-                        label="NOMAD Score"
+                        label="Babylon Score"
                         size="lg"
                         variant="cpu"
                         subtext="out of 100"
@@ -501,7 +501,7 @@ export default function BenchmarkPage(props: {
                         {latestResult.nomad_score.toFixed(1)}
                       </div>
                       <p className="text-desert-stone-dark">
-                        Your NOMAD Score is a weighted composite of all benchmark results.
+                        Your Babylon Score is a weighted composite of all benchmark results.
                       </p>
 
                       {/* Share with Community - Only for full benchmarks with AI data */}
@@ -767,7 +767,7 @@ export default function BenchmarkPage(props: {
                         </div>
                       </div>
                       <div>
-                        <div className="text-desert-stone-dark">NOMAD Score</div>
+                        <div className="text-desert-stone-dark">Babylon Score</div>
                         <div className="font-bold text-desert-green">
                           {latestResult.nomad_score.toFixed(1)}
                         </div>

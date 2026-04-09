@@ -30,7 +30,7 @@ import Dockerode from 'dockerode'
 
 // HMAC secret for signing submissions to the benchmark repository
 // This provides basic protection against casual API abuse.
-// Note: Since NOMAD is open source, a determined attacker could extract this.
+// Note: Since Babylon is open source, a determined attacker could extract this.
 // For stronger protection, see challenge-response authentication.
 const BENCHMARK_HMAC_SECRET = '778ba65d0bc0e23119e5ffce4b3716648a7d071f0a47ec3f'
 
@@ -46,7 +46,7 @@ const SCORE_WEIGHTS = {
 
 // Benchmark configuration constants
 const SYSBENCH_IMAGE = 'severalnines/sysbench:latest'
-const SYSBENCH_CONTAINER_NAME = 'nomad_benchmark_sysbench'
+const SYSBENCH_CONTAINER_NAME = 'babylon_benchmark_sysbench'
 
 // Reference model for AI benchmark - small but meaningful
 const AI_BENCHMARK_MODEL = 'llama3.2:1b'
@@ -373,8 +373,8 @@ export class BenchmarkService {
         }
       }
 
-      // Calculate NOMAD score
-      this._updateStatus('calculating_score', 'Calculating NOMAD score...')
+      // Calculate Babylon score
+      this._updateStatus('calculating_score', 'Calculating Babylon score...')
       const nomadScore = this._calculateNomadScore(systemScores, aiScores)
 
       // Save result
@@ -519,7 +519,7 @@ export class BenchmarkService {
   }
 
   /**
-   * Calculate weighted NOMAD score
+   * Calculate weighted Babylon score
    */
   private _calculateNomadScore(systemScores: SystemScores, aiScores: Partial<AIScores>): number {
     let totalWeight = 0
