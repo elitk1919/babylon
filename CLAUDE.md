@@ -35,7 +35,11 @@ cmd /C "set ANTHROPIC_AUTH_TOKEN=ollama && set ANTHROPIC_BASE_URL=http://localho
 ```
 
 ## Critical Files
-- `admin/app/services/ollama_service.ts` — core AI client (chat, streaming, embeddings, model management)
+- `admin/app/services/ollama_service.ts` — core AI client (chat, streaming, embeddings, model management, tool execution loop)
+- `admin/app/services/tool_registry.ts` — central tool registry (MCP and future built-in tools)
+- `admin/app/services/mcp_service.ts` — MCP client lifecycle, tool discovery, KVStore persistence
+- `admin/app/services/wikipedia_mcp_server.ts` — built-in Wikipedia MCP server (ZIM files)
+- `admin/app/controllers/mcp_controller.ts` — MCP server CRUD API
 - `admin/app/services/rag_service.ts` — RAG pipeline and Qdrant integration
 - `admin/app/controllers/ollama_controller.ts` — chat API endpoints
 - `admin/app/services/chat_service.ts` — session management

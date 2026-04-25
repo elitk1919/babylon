@@ -27,6 +27,7 @@ export default await Env.create(new URL('../', import.meta.url), {
   |----------------------------------------------------------
   */
   BABYLON_STORAGE_PATH: Env.schema.string.optional(),
+  KIWIX_HOST_PORT: Env.schema.string.optional(),
 
   /*
   |----------------------------------------------------------

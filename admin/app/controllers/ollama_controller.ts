@@ -2,6 +2,7 @@ import { ChatService } from '#services/chat_service'
 import { DockerService } from '#services/docker_service'
 import { OllamaService } from '#services/ollama_service'
 import { RagService } from '#services/rag_service'
+import { toolRegistry } from '#services/tool_registry'
 import Service from '#models/service'
 import KVStore from '#models/kv_store'
 import { modelNameSchema } from '#validators/download'
@@ -127,8 +128,10 @@ export default class OllamaController {
       const think: boolean | 'medium' = thinkingCapability ? (reqData.model.startsWith('gpt-oss') ? 'medium' : true) : false
 
       // Separate sessionId from the Ollama request payload — Ollama rejects unknown fields
-      const { sessionId, tools, ...ollamaRequest } = reqData
-      const resolvedTools = tools?.length ? tools : undefined
+      const { sessionId, ...ollamaRequest } = reqData
+      // Tools come from the server-side registry only, never from the client
+      const registeredTools = toolRegistry.getDefinitions()
+      const resolvedTools = registeredTools.length ? registeredTools : undefined
 
       // Save user message to DB before streaming if sessionId provided
       let userContent: string | null = null

@@ -11,6 +11,7 @@ export default class ServiceSeeder extends BaseSeeder {
     'BABYLON_STORAGE_PATH',
     '/opt/babylon/storage'
   )
+  private static KIWIX_HOST_PORT = env.get('KIWIX_HOST_PORT', '8090')
   private static DEFAULT_SERVICES: Omit<
     ModelAttributes<Service>,
     'created_at' | 'updated_at' | 'metadata' | 'id' | 'available_update_version' | 'update_checked_at'
@@ -30,11 +31,11 @@ export default class ServiceSeeder extends BaseSeeder {
         HostConfig: {
           RestartPolicy: { Name: 'unless-stopped' },
           Binds: [`${ServiceSeeder.BABYLON_STORAGE_ABS_PATH}/zim:/data`],
-          PortBindings: { '8080/tcp': [{ HostPort: '8090' }] },
+          PortBindings: { '8080/tcp': [{ HostPort: ServiceSeeder.KIWIX_HOST_PORT }] },
         },
         ExposedPorts: { '8080/tcp': {} },
       }),
-      ui_location: '8090',
+      ui_location: ServiceSeeder.KIWIX_HOST_PORT,
       installed: false,
       installation_status: 'idle',
       is_dependency_service: false,

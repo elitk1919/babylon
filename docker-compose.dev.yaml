@@ -16,22 +16,28 @@ services:
   admin:
     image: babylon:dev
     build:
-      context: .
+      context: ../
       dockerfile: Dockerfile
     pull_policy: never
+    ports:
+      - "3100:3100"  # Wikipedia MCP debug SSE server
     environment:
       - APP_KEY=babylon-dev-key-not-for-production
       - URL=http://localhost:8080
       - DB_PASSWORD=babylon_dev
       - LOG_LEVEL=debug
       - DISABLE_COMPRESSION=true
+      - KIWIX_HOST_PORT=8091
+      - BABYLON_STORAGE_PATH=/run/desktop/mnt/host/c/dev/babylon/install/dev-storage
     volumes:
-      - ./dev-storage:/app/storage  # Use local dev-storage dir instead of /opt/babylon
+      - ./dev-storage:/app/storage  # Resolves to install/dev-storage (relative to base compose file)
 
   mysql:
     environment:
       - MYSQL_ROOT_PASSWORD=babylon_dev_root
       - MYSQL_PASSWORD=babylon_dev
+    volumes:
+      - ./dev-storage/mysql:/var/lib/mysql
 
   updater:
     profiles: [full]  # Exclude from default dev startup

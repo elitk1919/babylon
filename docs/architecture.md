@@ -57,11 +57,26 @@ Ollama (or any OpenAI-compatible endpoint) can run on a separate machine — use
 - Tries Ollama native `/api/embed` first
 - Falls back to `/v1/embeddings` (OpenAI-compatible)
 
-## Tool Calling (Planned)
-See [roadmap.md](roadmap.md) — `params: any` in `ollama_service.ts` makes this a small addition.
+## Tool Calling
+- `tool_registry.ts` — central registry mapping tool names to handlers
+- `OllamaService.chat()` and `chatStream()` implement a tool execution loop (max 10 iterations)
+- Tools are injected server-side from the registry on every chat request (never from the client)
+- Streaming path accumulates tool call deltas across chunks, executes tools, then re-enters the model
 
-## MCP Integration (Planned)
-See [roadmap.md](roadmap.md).
+## MCP Integration
+- `mcp_service.ts` — MCP client that connects to configured servers, discovers tools, and registers them in the tool registry
+- Transports: SSE, Streamable HTTP, stdio
+- Reconnection with exponential backoff (1s → 30s cap) for remote servers
+- `mcp_provider.ts` boots on startup, connects all enabled servers from KVStore (`mcp.servers`)
+- `mcp_controller.ts` exposes CRUD + connect/disconnect API at `/api/mcp/*`
+- Tool names are namespaced as `{serverId}__{toolName}` to avoid collisions
+- In-process servers (like Wikipedia) use `InMemoryTransport` — no network overhead, no reconnection
+
+### Built-in MCP Servers
+- **Wikipedia** (`wikipedia_mcp_server.ts`) — reads local Kiwix ZIM archives
+  - Tools: `search`, `read_article`, `list_archives`
+  - Connected via in-process transport by `wikipedia_mcp_provider.ts`
+  - Debug SSE endpoint on port 3100 for MCP Inspector
 
 ## Key Dependencies
 | Package | Purpose |
@@ -71,4 +86,5 @@ See [roadmap.md](roadmap.md).
 | `bullmq` | Background job queue |
 | `@openzim/libzim` | ZIM file reading (offline Wikipedia) |
 | `tesseract.js` | OCR for scanned PDFs/images |
-| `@modelcontextprotocol/sdk` | MCP client (to be added) |
+| `@modelcontextprotocol/sdk` | MCP client + in-process server |
+| `cheerio` | HTML→text extraction (Wikipedia articles) |

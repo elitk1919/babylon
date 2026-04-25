@@ -6,6 +6,7 @@
 | The routes file is used for defining the HTTP routes.
 |
 */
+import McpController from '#controllers/mcp_controller'
 import BenchmarkController from '#controllers/benchmark_controller'
 import ChatsController from '#controllers/chats_controller'
 import DocsController from '#controllers/docs_controller'
@@ -181,6 +182,18 @@ router
     router.delete('/:filename', [ZimController, 'delete'])
   })
   .prefix('/api/zim')
+
+router
+  .group(() => {
+    router.get('/servers', [McpController, 'index'])
+    router.post('/servers', [McpController, 'store'])
+    router.put('/servers/:id', [McpController, 'update'])
+    router.delete('/servers/:id', [McpController, 'destroy'])
+    router.post('/servers/:id/connect', [McpController, 'connect'])
+    router.post('/servers/:id/disconnect', [McpController, 'disconnect'])
+    router.get('/tools', [McpController, 'tools'])
+  })
+  .prefix('/api/mcp')
 
 router
   .group(() => {

@@ -19,6 +19,7 @@ import { BABYLON_API_DEFAULT_BASE_URL } from '../../constants/misc.js'
 import KVStore from '#models/kv_store'
 
 const BABYLON_MODELS_API_PATH = '/api/v1/ollama/models'
+const MAX_TOOL_ITERATIONS = 10
 const MODELS_CACHE_FILE = path.join(process.cwd(), 'storage', 'ollama-models-cache.json')
 const CACHE_MAX_AGE_MS = 24 * 60 * 60 * 1000 // 24 hours
 
@@ -213,8 +214,9 @@ export class OllamaService {
     }
 
     const messages = [...chatRequest.messages] as ChatCompletionMessageParam[]
+    let toolIterations = 0
 
-    // Tool execution loop — runs until the model stops calling tools
+    // Tool execution loop — runs until the model stops calling tools or limit reached
     while (true) {
       const params: any = {
         model: chatRequest.model,
@@ -229,6 +231,16 @@ export class OllamaService {
       const choice = response.choices[0]
 
       if (choice.finish_reason === 'tool_calls' && choice.message.tool_calls?.length) {
+        toolIterations++
+        if (toolIterations > MAX_TOOL_ITERATIONS) {
+          logger.warn(`[OllamaService] Max tool iterations (${MAX_TOOL_ITERATIONS}) reached, stopping loop`)
+          return {
+            message: { content: 'Tool execution limit reached. Please try a simpler request.' },
+            done: true,
+            model: response.model,
+          }
+        }
+
         messages.push(choice.message as ChatCompletionMessageParam)
 
         for (const tc of choice.message.tool_calls) {
@@ -347,6 +359,7 @@ export class OllamaService {
 
     async function* toolLoop(): AsyncGenerator<BabylonChatStreamChunk> {
       const messages = [...chatRequest.messages] as ChatCompletionMessageParam[]
+      let toolIterations = 0
 
       while (true) {
         const params: any = {
@@ -370,6 +383,12 @@ export class OllamaService {
 
         // If tool calls were requested, execute them and continue the loop
         if (toolCallsAcc.size > 0 && lastFinishReason !== 'stop') {
+          toolIterations++
+          if (toolIterations > MAX_TOOL_ITERATIONS) {
+            loggerRef.warn(`[OllamaService] Max tool iterations (${MAX_TOOL_ITERATIONS}) reached, stopping loop`)
+            yield { message: { content: 'Tool execution limit reached. Please try a simpler request.' }, done: true }
+            return
+          }
           const toolCalls: ToolCall[] = Array.from(toolCallsAcc.values()).map((tc) => ({
             id: tc.id,
             type: 'function' as const,

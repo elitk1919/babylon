@@ -1,6 +1,6 @@
 COMPOSE = docker compose --project-directory . -f install/management_compose.yaml -f docker-compose.dev.yaml
 
-.PHONY: up down build logs restart shell
+.PHONY: up down build logs restart shell clean
 
 up:
 	$(COMPOSE) up -d --build
@@ -19,3 +19,7 @@ restart:
 
 shell:
 	$(COMPOSE) exec admin sh
+
+clean:
+	$(COMPOSE) down -v
+	rm -rf dev-storage

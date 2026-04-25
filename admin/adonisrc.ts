@@ -55,6 +55,8 @@ export default defineConfig({
     () => import('@adonisjs/transmit/transmit_provider'),
     () => import('#providers/map_static_provider'),
     () => import('#providers/kiwix_migration_provider'),
+    () => import('#providers/mcp_provider'),
+    () => import('#providers/wikipedia_mcp_provider'),
   ],
 
   /*
